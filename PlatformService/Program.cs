@@ -1,5 +1,7 @@
+using System.Windows.Input;
 using Microsoft.EntityFrameworkCore;
 using PlatformService.Data;
+using PlatformService.SyncDataServices.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +13,10 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 //Add repository
 builder.Services.AddScoped<IPlatformRepository, PlatformRepository>();
 
+// Add httpClient
+builder.Services.AddHttpClient<ICommandDataClient, HttpCommandDataClient>();
+
+
 builder.Services.AddControllers();
 
 // Add Automapper
@@ -19,6 +25,8 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 //swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+Console.WriteLine($"--> CommandService Endpoint {builder.Configuration["CommandService"]}");
 
 var app = builder.Build();
 

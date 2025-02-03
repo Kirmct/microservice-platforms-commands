@@ -1,0 +1,21 @@
+using Microsoft.AspNetCore.Mvc;
+
+namespace CommandsService.Controllers;
+
+[ApiController]
+[Route("api/v1/c/[controller]")]
+public class PlatformsController : ControllerBase
+{
+    public PlatformsController()
+    {
+        
+    }
+
+    [HttpPost]
+    public ActionResult TestInboundConnection(){
+        Console.WriteLine("--> Inbound POST # Commands Service");
+        
+        return Ok("Inbound test from Platforms Controller");
+    }
+
+}

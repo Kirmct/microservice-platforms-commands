@@ -1,8 +1,10 @@
+using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using PlatformService.Data;
 using PlatformService.Dtos;
 using PlatformService.Models;
+using PlatformService.SyncDataServices.Http;
 
 namespace PlatformService.Controllers;
 
@@ -14,11 +16,16 @@ public class PlatformsController : ControllerBase
 {
     private readonly IPlatformRepository _platformRepository;
     private readonly IMapper _mapper;
+    private readonly ICommandDataClient _commandDataClient;
 
-    public PlatformsController(IPlatformRepository platformRepository, IMapper mapper)
+    public PlatformsController(
+        IPlatformRepository platformRepository,
+        IMapper mapper,
+        ICommandDataClient commandDataClient)
     {
         _platformRepository = platformRepository;
         _mapper = mapper;
+        _commandDataClient = commandDataClient;
     }
 
     [HttpGet]
@@ -46,31 +53,35 @@ public class PlatformsController : ControllerBase
     }
 
     [HttpPost]
-    public ActionResult<PlatformReadDto> CreatePlatform([FromBody] PlatformCreateDto request)
+    public async Task<ActionResult<PlatformReadDto>> CreatePlatform([FromBody] PlatformCreateDto request)
     {
         Console.WriteLine("--> Creating Platforms...");
 
-        try
+        var data = _mapper.Map<Platform>(request);
+
+        _platformRepository.CreatePlatform(data);
+
+        bool isSuccess = _platformRepository.SaveChanges();
+
+        if (isSuccess)
         {
-            var data = _mapper.Map<Platform>(request);
+            var result = _mapper.Map<PlatformReadDto>(data);
 
-            _platformRepository.CreatePlatform(data);
-
-            bool isSuccess = _platformRepository.SaveChanges();
-
-            if (isSuccess)
+            try
             {
-                var result = _mapper.Map<PlatformReadDto>(data);
-                return CreatedAtRoute(nameof(GetPlatformById), new { Id = result.Id }, result);
-            }
-            else
-                return BadRequest("Wasn't possible to create a new plataform, check your input data.");
+                await _commandDataClient.SendPlatformToCommand(result);
 
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"--> Could not send synchronously: {ex.Message}");
+            }
+
+            return CreatedAtRoute(nameof(GetPlatformById), new { Id = result.Id }, result);
         }
-        catch (Exception ex)
-        {
-            return BadRequest($"Unexpected error, more details: {ex.Message}");
-        }
+        else
+            return BadRequest("Wasn't possible to create a new plataform, check your input data.");
+
 
     }
 }
