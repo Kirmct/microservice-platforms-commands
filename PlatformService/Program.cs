@@ -1,4 +1,3 @@
-using System.Windows.Input;
 using Microsoft.EntityFrameworkCore;
 using PlatformService.Data;
 using PlatformService.SyncDataServices.Http;
@@ -7,8 +6,18 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Add database
-builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseInMemoryDatabase("InMen"));
+if (builder.Environment.IsProduction())
+{
+    Console.WriteLine("--> Using SqlServer Db");
+    builder.Services.AddDbContext<AppDbContext>(opt =>
+        opt.UseSqlServer(builder.Configuration.GetConnectionString("PlatformsConnection")));
+}
+else
+{
+    Console.WriteLine("--> Using InMemory Db");
+    builder.Services.AddDbContext<AppDbContext>(opt =>
+        opt.UseInMemoryDatabase("InMen"));
+}
 
 //Add repository
 builder.Services.AddScoped<IPlatformRepository, PlatformRepository>();
@@ -30,7 +39,6 @@ Console.WriteLine($"--> CommandService Endpoint {builder.Configuration["CommandS
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
