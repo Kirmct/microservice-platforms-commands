@@ -51,7 +51,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-//seeding database with static class
+//seeding db with static class
 PrepDb.PrepPopulation(app, app.Environment.IsProduction());
 
 Console.WriteLine("--> Applications is running");
