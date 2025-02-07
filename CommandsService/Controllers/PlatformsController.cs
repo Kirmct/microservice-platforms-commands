@@ -7,9 +7,7 @@ namespace CommandsService.Controllers;
 public class PlatformsController : ControllerBase
 {
     public PlatformsController()
-    {
-        
-    }
+    {}
 
     [HttpPost]
     public ActionResult TestInboundConnection(){
